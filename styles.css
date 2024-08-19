@@ -1,0 +1,117 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
+
+#control-panel {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#building {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    width: 100%;
+}
+
+.floor {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-top: 2px solid #000;
+    position: relative;
+    height: 100px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.floor-buttons {
+    display: flex;
+    flex-direction: column;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+button.up {
+    background-color: green;
+    color: white;
+}
+
+button.down {
+    background-color: orange;
+    color: white;
+}
+
+.lift {
+    width: 50px;
+    height: 80px;
+    background-color: #00f;
+    position: absolute;
+    bottom: 0;
+    transition: transform 2s ease, left 0.5s ease;
+    margin-left: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lift::before {
+    content: "";
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    background-color: #a11e1e;
+    z-index: 1;
+    left: 0;
+    transition: width 1s;
+}
+
+.lift::after {
+    content: "";
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    background-color: #079595;
+    z-index: 1;
+    right: 0;
+    transition: width 1s;
+}
+
+.lift.door-open::before {
+    width: 0;
+}
+
+.lift.door-open::after {
+    width: 0;
+}
+
+@media (max-width: 600px) {
+    .floor {
+        height: 70px;
+    }
+
+    .lift {
+        width: 40px;
+        height: 60px;
+    }
+
+    button {
+        padding: 8px;
+        font-size: 12px;
+    }
+}
+
