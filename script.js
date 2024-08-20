@@ -5,11 +5,11 @@ let liftState = [];
 function generateBuilding() {
     const floorsCount = parseInt(document.getElementById('floors').value);
     const liftsCount = parseInt(document.getElementById('lifts').value);
-    
-    const building = document.getElementById('building');
-    building.innerHTML = ''; 
 
-    liftState = Array(liftsCount).fill(1); 
+    const building = document.getElementById('building');
+    building.innerHTML = ''; // Clear previous building layout
+
+    liftState = Array(liftsCount).fill(1); // Initialize lifts to start at floor 1
 
     for (let i = 1; i <= floorsCount; i++) {
         const floor = document.createElement('div');
@@ -36,7 +36,6 @@ function generateBuilding() {
         }
 
         floor.appendChild(floorButtons);
-
         building.appendChild(floor);
     }
 
@@ -46,13 +45,13 @@ function generateBuilding() {
         lift.dataset.lift = i;
         lift.style.transform = `translateY(0px)`;
         lift.style.left = `${(i * 70) + 100}px`;
-        building.firstChild.appendChild(lift); 
+        building.firstChild.appendChild(lift);
     }
 }
 
 function requestLift(floor) {
     const lifts = document.querySelectorAll('.lift');
-    const targetY = -(floor - 1) * 110; 
+    const targetY = -(floor - 1) * 110;
     let closestLift = null;
     let minDistance = Infinity;
 
@@ -82,10 +81,8 @@ function moveLift(lift, liftIndex, targetFloor, targetY) {
 
         setTimeout(() => {
             lift.classList.remove('door-open');
-        }, 2500); 
+        }, 2500); // Doors open for 2.5s before closing
     }, { once: true });
 }
 
 generateBuilding();
-
-

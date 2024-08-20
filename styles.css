@@ -49,17 +49,19 @@ button {
 button.up {
     background-color: black;
     color: white;
+    border-radius: 50vh;
 }
 
 button.down {
     background-color: white;
     color: black;
+    border-radius: 50vh;
 }
 
 .lift {
     width: 50px;
     height: 80px;
-    background-color: #00f;
+    background-color: #000;
     position: absolute;
     bottom: 0;
     transition: transform 2s ease, left 0.5s ease;
@@ -74,7 +76,7 @@ button.down {
     position: absolute;
     width: 50%;
     height: 100%;
-    background-color: #0000;
+    background-color: #079595;
     z-index: 1;
     left: 0;
     transition: width 1s;
@@ -85,7 +87,7 @@ button.down {
     position: absolute;
     width: 50%;
     height: 100%;
-    background-color: #000;
+    background-color: #a11e1e;
     z-index: 1;
     right: 0;
     transition: width 1s;
