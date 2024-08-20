@@ -2,15 +2,17 @@ document.getElementById('generate').addEventListener('click', generateBuilding);
 
 let liftState = [];
 let pendingRequests = [];
+let liftBusy = [];
 
 function generateBuilding() {
     const floorsCount = parseInt(document.getElementById('floors').value);
     const liftsCount = parseInt(document.getElementById('lifts').value);
 
     const building = document.getElementById('building');
-    building.innerHTML = ''; // Clear previous building layout
+    building.innerHTML = '';
 
-    liftState = Array(liftsCount).fill(1); // Initialize lifts to start at floor 1
+    liftState = Array(liftsCount).fill(1);
+    liftBusy = Array(liftsCount).fill(false);
 
     for (let i = 1; i <= floorsCount; i++) {
         const floor = document.createElement('div');
@@ -54,29 +56,28 @@ function requestLift(floor) {
     const lifts = document.querySelectorAll('.lift');
     let liftAlreadyOnFloor = null;
 
-    // Check if any lift is already on the requested floor
     lifts.forEach(lift => {
         const liftIndex = parseInt(lift.dataset.lift);
         const currentFloor = liftState[liftIndex];
+        const isBusy = liftBusy[liftIndex];
 
-        if (currentFloor === floor) {
+        if (currentFloor === floor && !isBusy) {
             liftAlreadyOnFloor = lift;
         }
     });
 
-    // If there's a lift on the requested floor, just open the doors
     if (liftAlreadyOnFloor) {
         openDoors(liftAlreadyOnFloor);
     } else {
         pendingRequests.push(floor);
-        processNextRequest(); // Start processing the next request in the queue
+        processNextRequest();
     }
 }
 
 function processNextRequest() {
-    if (pendingRequests.length === 0) return; // If no pending requests, stop
+    if (pendingRequests.length === 0) return;
 
-    const floor = pendingRequests.shift(); // Get the next floor in the queue
+    const floor = pendingRequests.shift();
     const lifts = document.querySelectorAll('.lift');
     const targetY = -(floor - 1) * 112;
     let closestLift = null;
@@ -85,9 +86,10 @@ function processNextRequest() {
     lifts.forEach(lift => {
         const liftIndex = parseInt(lift.dataset.lift);
         const currentFloor = liftState[liftIndex];
+        const isBusy = liftBusy[liftIndex];
         const distance = Math.abs(currentFloor - floor);
 
-        if (distance < minDistance) {
+        if (distance < minDistance && !isBusy) {
             closestLift = lift;
             minDistance = distance;
         }
@@ -95,6 +97,7 @@ function processNextRequest() {
 
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
+        liftBusy[liftIndex] = true;
         moveLift(closestLift, liftIndex, floor, targetY);
     }
 }
@@ -102,7 +105,9 @@ function processNextRequest() {
 function moveLift(lift, liftIndex, targetFloor, targetY) {
     const currentFloor = liftState[liftIndex];
     const floorsToMove = Math.abs(currentFloor - targetFloor);
-    const moveTime = floorsToMove * 2000; // 2 seconds per floor
+    const moveTime = floorsToMove * 2000;
+
+    closeDoors(lift);
 
     lift.style.transition = `transform ${moveTime}ms ease`;
     lift.style.transform = `translateY(${targetY}px)`;
@@ -118,9 +123,14 @@ function openDoors(lift) {
 
     setTimeout(() => {
         lift.classList.remove('door-open');
-        // Process the next floor call after the doors close
+        const liftIndex = parseInt(lift.dataset.lift);
+        liftBusy[liftIndex] = false;
         setTimeout(processNextRequest, 2500); // Doors close after 2.5 seconds
     }, 2500); // Doors stay open for 2.5 seconds
+}
+
+function closeDoors(lift) {
+    lift.classList.remove('door-open');
 }
 
 generateBuilding();
