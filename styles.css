@@ -64,7 +64,7 @@ button.down {
 .lift {
     width: 40px;
     height: 70px;
-    background-color: #000;
+    background-color: rgb(163, 163, 255);
     position: absolute;
     bottom: 0;
     transition: transform 2s ease, left 0.5s ease;
@@ -72,7 +72,7 @@ button.down {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-right: 2px solid #000;
+    border-right: 2px solid white;
     /* Separator between lifts */
 }
 
@@ -81,7 +81,7 @@ button.down {
     position: absolute;
     width: 50%;
     height: 100%;
-    background-color: #079595;
+    background-color: #353535;
     z-index: 1;
     left: 0;
     transition: width 1s;
@@ -92,7 +92,7 @@ button.down {
     position: absolute;
     width: 50%;
     height: 100%;
-    background-color: #a11e1e;
+    background-color: #353535;
     z-index: 1;
     right: 0;
     transition: width 1s;

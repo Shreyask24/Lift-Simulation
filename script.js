@@ -1,6 +1,7 @@
 document.getElementById('generate').addEventListener('click', generateBuilding);
 
 let liftState = [];
+let pendingRequests = [];
 
 function generateBuilding() {
     const floorsCount = parseInt(document.getElementById('floors').value);
@@ -51,6 +52,32 @@ function generateBuilding() {
 
 function requestLift(floor) {
     const lifts = document.querySelectorAll('.lift');
+    let liftAlreadyOnFloor = null;
+
+    // Check if any lift is already on the requested floor
+    lifts.forEach(lift => {
+        const liftIndex = parseInt(lift.dataset.lift);
+        const currentFloor = liftState[liftIndex];
+
+        if (currentFloor === floor) {
+            liftAlreadyOnFloor = lift;
+        }
+    });
+
+    // If there's a lift on the requested floor, just open the doors
+    if (liftAlreadyOnFloor) {
+        openDoors(liftAlreadyOnFloor);
+    } else {
+        pendingRequests.push(floor);
+        processNextRequest(); // Start processing the next request in the queue
+    }
+}
+
+function processNextRequest() {
+    if (pendingRequests.length === 0) return; // If no pending requests, stop
+
+    const floor = pendingRequests.shift(); // Get the next floor in the queue
+    const lifts = document.querySelectorAll('.lift');
     const targetY = -(floor - 1) * 112;
     let closestLift = null;
     let minDistance = Infinity;
@@ -73,16 +100,27 @@ function requestLift(floor) {
 }
 
 function moveLift(lift, liftIndex, targetFloor, targetY) {
+    const currentFloor = liftState[liftIndex];
+    const floorsToMove = Math.abs(currentFloor - targetFloor);
+    const moveTime = floorsToMove * 2000; // 2 seconds per floor
+
+    lift.style.transition = `transform ${moveTime}ms ease`;
     lift.style.transform = `translateY(${targetY}px)`;
     liftState[liftIndex] = targetFloor;
 
     lift.addEventListener('transitionend', () => {
-        lift.classList.add('door-open');
-
-        setTimeout(() => {
-            lift.classList.remove('door-open');
-        }, 2500); // Doors open for 2.5s before closing
+        openDoors(lift);
     }, { once: true });
+}
+
+function openDoors(lift) {
+    lift.classList.add('door-open');
+
+    setTimeout(() => {
+        lift.classList.remove('door-open');
+        // Process the next floor call after the doors close
+        setTimeout(processNextRequest, 2500); // Doors close after 2.5 seconds
+    }, 2500); // Doors stay open for 2.5 seconds
 }
 
 generateBuilding();
