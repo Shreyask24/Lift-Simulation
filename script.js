@@ -51,7 +51,7 @@ function generateBuilding() {
 
 function requestLift(floor) {
     const lifts = document.querySelectorAll('.lift');
-    const targetY = -(floor - 1) * 110;
+    const targetY = -(floor - 1) * 112;
     let closestLift = null;
     let minDistance = Infinity;
 
