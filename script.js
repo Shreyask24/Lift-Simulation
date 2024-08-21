@@ -77,7 +77,7 @@ function requestLift(floor) {
 function processNextRequest() {
     if (pendingRequests.length === 0) return;
 
-    const floor = pendingRequests.shift();
+    const floor = pendingRequests[0];
     const lifts = document.querySelectorAll('.lift');
     const targetY = -(floor - 1) * 112;
     let closestLift = null;
@@ -98,6 +98,7 @@ function processNextRequest() {
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
         liftBusy[liftIndex] = true;
+        pendingRequests.shift();
         moveLift(closestLift, liftIndex, floor, targetY);
     }
 }
@@ -125,8 +126,8 @@ function openDoors(lift) {
         lift.classList.remove('door-open');
         const liftIndex = parseInt(lift.dataset.lift);
         liftBusy[liftIndex] = false;
-        setTimeout(processNextRequest, 2500); // Doors close after 2.5 seconds
-    }, 2500); // Doors stay open for 2.5 seconds
+        setTimeout(processNextRequest, 2500);
+    }, 2500);
 }
 
 function closeDoors(lift) {
