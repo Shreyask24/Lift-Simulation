@@ -77,7 +77,7 @@ function requestLift(floor) {
 function processNextRequest() {
     if (pendingRequests.length === 0) return;
 
-    const floor = pendingRequests[0];
+    const floor = pendingRequests.shift();
     const lifts = document.querySelectorAll('.lift');
     const targetY = -(floor - 1) * 112;
     let closestLift = null;
@@ -98,8 +98,10 @@ function processNextRequest() {
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
         liftBusy[liftIndex] = true;
-        pendingRequests.shift();
         moveLift(closestLift, liftIndex, floor, targetY);
+    } else {
+        pendingRequests.push(floor);
+        setTimeout(processNextRequest, 1000);
     }
 }
 
@@ -120,18 +122,20 @@ function moveLift(lift, liftIndex, targetFloor, targetY) {
 }
 
 function openDoors(lift) {
-    lift.classList.add('door-open');
+    if (!lift.classList.contains('door-open')) {
+        lift.classList.add('door-open');
 
-    setTimeout(() => {
-        lift.classList.remove('door-open');
-        const liftIndex = parseInt(lift.dataset.lift);
-        liftBusy[liftIndex] = false;
-        setTimeout(processNextRequest, 2500);
-    }, 2500);
+        setTimeout(() => {
+            lift.classList.remove('door-open');
+            const liftIndex = parseInt(lift.dataset.lift);
+            liftBusy[liftIndex] = false;
+            setTimeout(processNextRequest, 2500);
+        }, 2500);
+    }
 }
 
 function closeDoors(lift) {
-    lift.classList.remove('door-open');
+    if (lift.classList.contains('door-open')) {
+        lift.classList.remove('door-open');
+    }
 }
-
-generateBuilding();
