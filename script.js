@@ -1,9 +1,9 @@
 document.getElementById('generate').addEventListener('click', generateBuilding);
 
 let liftState = [];
-let pendingRequests = [];
+let pendingRequests = { up: [], down: [] };
 let liftBusy = [];
-let requestedFloors = new Set();
+let requestedFloors = { up: new Set(), down: new Set() };
 
 function generateBuilding() {
     const floorsCount = parseInt(document.getElementById('floors').value);
@@ -14,7 +14,7 @@ function generateBuilding() {
 
     liftState = Array(liftsCount).fill(1);
     liftBusy = Array(liftsCount).fill(false);
-    requestedFloors.clear();
+    requestedFloors = { up: new Set(), down: new Set() };
 
     // Create floors
     for (let i = 1; i <= floorsCount; i++) {
@@ -29,7 +29,7 @@ function generateBuilding() {
             const upButton = document.createElement('button');
             upButton.className = 'up';
             upButton.innerText = 'Up';
-            upButton.onclick = () => requestLift(i);
+            upButton.onclick = () => requestLift(i, 'up');
             floorButtons.appendChild(upButton);
         }
 
@@ -37,7 +37,7 @@ function generateBuilding() {
             const downButton = document.createElement('button');
             downButton.className = 'down';
             downButton.innerText = 'Down';
-            downButton.onclick = () => requestLift(i);
+            downButton.onclick = () => requestLift(i, 'down');
             floorButtons.appendChild(downButton);
         }
 
@@ -51,25 +51,25 @@ function generateBuilding() {
         lift.className = 'lift';
         lift.dataset.lift = i;
         lift.style.transform = `translateY(0px)`;
-        lift.style.left = `${(i * 70) + 100}px`; // Position lifts next to each other
+        lift.style.left = `${(i * 70) + 100}px`;
         building.firstChild.appendChild(lift);
     }
 }
 
-function requestLift(floor) {
-    if (requestedFloors.has(floor)) {
+function requestLift(floor, direction) {
+    if (requestedFloors[direction].has(floor)) {
         return;
     }
 
-    requestedFloors.add(floor); // Mark the floor as requested
-    pendingRequests.push(floor);
-    processNextRequest();
+    requestedFloors[direction].add(floor);
+    pendingRequests[direction].push(floor);
+    processNextRequest(direction);
 }
 
-function processNextRequest() {
-    if (pendingRequests.length === 0) return;
+function processNextRequest(direction) {
+    if (pendingRequests[direction].length === 0) return;
 
-    const floor = pendingRequests.shift();
+    const floor = pendingRequests[direction].shift();
     const lifts = document.querySelectorAll('.lift');
     const targetY = -(floor - 1) * 112;
     let closestLift = null;
@@ -90,14 +90,14 @@ function processNextRequest() {
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
         liftBusy[liftIndex] = true;
-        moveLift(closestLift, liftIndex, floor, targetY);
+        moveLift(closestLift, liftIndex, floor, targetY, direction);
     } else {
-        pendingRequests.push(floor);
-        setTimeout(processNextRequest, 1000);
+        pendingRequests[direction].push(floor);
+        setTimeout(() => processNextRequest(direction), 1000);
     }
 }
 
-function moveLift(lift, liftIndex, targetFloor, targetY) {
+function moveLift(lift, liftIndex, targetFloor, targetY, direction) {
     const currentFloor = liftState[liftIndex];
     const floorsToMove = Math.abs(currentFloor - targetFloor);
     const moveTime = floorsToMove * 2000;
@@ -107,26 +107,26 @@ function moveLift(lift, liftIndex, targetFloor, targetY) {
     liftState[liftIndex] = targetFloor;
 
     setTimeout(() => {
-        openDoors(lift, liftIndex, targetFloor);
+        openDoors(lift, liftIndex, targetFloor, direction);
     }, moveTime);
 }
 
-function openDoors(lift, liftIndex, targetFloor) {
+function openDoors(lift, liftIndex, targetFloor, direction) {
     if (!lift.classList.contains('door-open')) {
         lift.classList.add('door-open');
 
         setTimeout(() => {
-            closeDoors(lift, liftIndex);
-            requestedFloors.delete(targetFloor);
+            closeDoors(lift, liftIndex, direction);
+            requestedFloors[direction].delete(targetFloor);
         }, 2500);
     }
 }
 
-function closeDoors(lift, liftIndex) {
+function closeDoors(lift, liftIndex, direction) {
     if (lift.classList.contains('door-open')) {
         lift.classList.remove('door-open');
     }
 
     liftBusy[liftIndex] = false;
-    setTimeout(processNextRequest, 500);
+    setTimeout(() => processNextRequest(direction), 500);
 }
