@@ -1,13 +1,42 @@
-document.getElementById('generate').addEventListener('click', generateBuilding);
+document.getElementById('generate').addEventListener('click', function () {
+    const floorsCount = parseInt(document.getElementById('floors').value);
+    let liftsCount = parseInt(document.getElementById('lifts').value);
+
+    const maxLiftsAllowed = Math.ceil(floorsCount / 2);
+
+    if (liftsCount <= maxLiftsAllowed) {
+        generateBuilding();
+    } else {
+        alert(`Too many lifts for the number of floors. You can have at most ${maxLiftsAllowed} lifts for ${floorsCount} floors.`);
+    }
+});
 
 let liftState = [];
 let pendingRequests = { up: [], down: [] };
 let liftBusy = [];
 let requestedFloors = { up: new Set(), down: new Set() };
 
+const MAX_FLOORS = 50;
+
 function generateBuilding() {
+    // Clear any previous error messages
+    const errorMessage = document.getElementById('error-message');
+    if (errorMessage) {
+        errorMessage.remove();
+    }
+
     const floorsCount = parseInt(document.getElementById('floors').value);
-    const liftsCount = parseInt(document.getElementById('lifts').value);
+    let liftsCount = parseInt(document.getElementById('lifts').value);
+
+    if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1) {
+        displayError('Please enter valid positive numbers for floors and lifts.');
+        return;
+    }
+
+    if (floorsCount > MAX_FLOORS) {
+        displayError(`The maximum number of floors is ${MAX_FLOORS}.`);
+        return;
+    }
 
     const building = document.getElementById('building');
     building.innerHTML = '';
@@ -16,7 +45,6 @@ function generateBuilding() {
     liftBusy = Array(liftsCount).fill(false);
     requestedFloors = { up: new Set(), down: new Set() };
 
-    // Create floors
     for (let i = 1; i <= floorsCount; i++) {
         const floor = document.createElement('div');
         floor.className = 'floor';
@@ -45,15 +73,24 @@ function generateBuilding() {
         building.appendChild(floor);
     }
 
-    // Create lifts
     for (let i = 0; i < liftsCount; i++) {
         const lift = document.createElement('div');
         lift.className = 'lift';
         lift.dataset.lift = i;
         lift.style.transform = `translateY(0px)`;
-        lift.style.left = `${(i * 70) + 100}px`;
+        lift.style.left = `${(i * 70) + 100}px`;  // Position lifts next to each other
         building.firstChild.appendChild(lift);
     }
+}
+
+function displayError(message) {
+    const controlPanel = document.getElementById('control-panel');
+    const errorMessage = document.createElement('div');
+    errorMessage.id = 'error-message';
+    errorMessage.style.color = 'red';
+    errorMessage.style.marginTop = '10px';
+    errorMessage.innerText = message;
+    controlPanel.appendChild(errorMessage);
 }
 
 function requestLift(floor, direction) {
