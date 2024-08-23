@@ -1,40 +1,22 @@
-document.getElementById('generate').addEventListener('click', function () {
-    const floorsCount = parseInt(document.getElementById('floors').value);
-    let liftsCount = parseInt(document.getElementById('lifts').value);
-
-    const maxLiftsAllowed = Math.ceil(floorsCount / 2);
-
-    if (liftsCount <= maxLiftsAllowed) {
-        generateBuilding();
-    } else {
-        alert(`Too many lifts for the number of floors. You can have at most ${maxLiftsAllowed} lifts for ${floorsCount} floors.`);
-    }
-});
+document.getElementById('generate').addEventListener('click', generateBuilding);
 
 let liftState = [];
 let pendingRequests = { up: [], down: [] };
 let liftBusy = [];
 let requestedFloors = { up: new Set(), down: new Set() };
 
-const MAX_FLOORS = 50;
-
 function generateBuilding() {
-    // Clear any previous error messages
     const errorMessage = document.getElementById('error-message');
     if (errorMessage) {
         errorMessage.remove();
     }
 
     const floorsCount = parseInt(document.getElementById('floors').value);
-    let liftsCount = parseInt(document.getElementById('lifts').value);
+    const liftsCount = parseInt(document.getElementById('lifts').value);
 
+    // Input validation
     if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1) {
         displayError('Please enter valid positive numbers for floors and lifts.');
-        return;
-    }
-
-    if (floorsCount > MAX_FLOORS) {
-        displayError(`The maximum number of floors is ${MAX_FLOORS}.`);
         return;
     }
 
@@ -45,6 +27,7 @@ function generateBuilding() {
     liftBusy = Array(liftsCount).fill(false);
     requestedFloors = { up: new Set(), down: new Set() };
 
+    // Create floors
     for (let i = 1; i <= floorsCount; i++) {
         const floor = document.createElement('div');
         floor.className = 'floor';
@@ -73,12 +56,13 @@ function generateBuilding() {
         building.appendChild(floor);
     }
 
+    // Create lifts
     for (let i = 0; i < liftsCount; i++) {
         const lift = document.createElement('div');
         lift.className = 'lift';
         lift.dataset.lift = i;
         lift.style.transform = `translateY(0px)`;
-        lift.style.left = `${(i * 70) + 100}px`;  // Position lifts next to each other
+        lift.style.left = `${(i * 70) + 100}px`;
         building.firstChild.appendChild(lift);
     }
 }
@@ -92,6 +76,7 @@ function displayError(message) {
     errorMessage.innerText = message;
     controlPanel.appendChild(errorMessage);
 }
+
 
 function requestLift(floor, direction) {
     if (requestedFloors[direction].has(floor)) {
