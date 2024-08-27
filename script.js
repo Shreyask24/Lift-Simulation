@@ -16,7 +16,7 @@ function generateBuilding() {
 
     // Input validation
     if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1 || floorsCount == 1) {
-        displayError('Please enter valid positive numbers for floors and lifts.');
+        displayError('Please enter valid positive numbers above one for floors and lifts.');
         return;
     }
 
@@ -76,7 +76,6 @@ function displayError(message) {
     errorMessage.innerText = message;
     controlPanel.appendChild(errorMessage);
 }
-
 
 function requestLift(floor, direction) {
     if (requestedFloors[direction].has(floor)) {
