@@ -15,7 +15,7 @@ function generateBuilding() {
     const liftsCount = parseInt(document.getElementById('lifts').value);
 
     // Input validation
-    if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1) {
+    if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1 || floorsCount == 1) {
         displayError('Please enter valid positive numbers for floors and lifts.');
         return;
     }
@@ -124,13 +124,15 @@ function moveLift(lift, liftIndex, targetFloor, targetY, direction) {
     const floorsToMove = Math.abs(currentFloor - targetFloor);
     const moveTime = floorsToMove * 2000;
 
-    lift.style.transition = `transform ${moveTime}ms ease`;
-    lift.style.transform = `translateY(${targetY}px)`;
-    liftState[liftIndex] = targetFloor;
-
     setTimeout(() => {
-        openDoors(lift, liftIndex, targetFloor, direction);
-    }, moveTime);
+        lift.style.transition = `transform ${moveTime}ms ease`;
+        lift.style.transform = `translateY(${targetY}px)`;
+        liftState[liftIndex] = targetFloor;
+
+        setTimeout(() => {
+            openDoors(lift, liftIndex, targetFloor, direction);
+        }, moveTime);
+    }, 2500);
 }
 
 function openDoors(lift, liftIndex, targetFloor, direction) {
