@@ -1,9 +1,9 @@
 document.getElementById('generate').addEventListener('click', generateBuilding);
 
 let liftState = [];
-let pendingRequests = { up: [], down: [] };
+let liftRequests = [];
 let liftBusy = [];
-let requestedFloors = { up: new Set(), down: new Set() };
+let requestedFloors = new Set();
 
 function generateBuilding() {
     const errorMessage = document.getElementById('error-message');
@@ -15,7 +15,7 @@ function generateBuilding() {
     const liftsCount = parseInt(document.getElementById('lifts').value);
 
     // Input validation
-    if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1 || floorsCount == 1) {
+    if (isNaN(floorsCount) || isNaN(liftsCount) || floorsCount < 1 || liftsCount < 1 || floorsCount === 1) {
         displayError('Please enter valid positive numbers above one for floors and lifts.');
         return;
     }
@@ -23,9 +23,11 @@ function generateBuilding() {
     const building = document.getElementById('building');
     building.innerHTML = '';
 
-    liftState = Array(liftsCount).fill(1);
-    liftBusy = Array(liftsCount).fill(false);
-    requestedFloors = { up: new Set(), down: new Set() };
+    // Initialize state for lifts
+    liftState = Array(liftsCount).fill(1); // Tracks the current floor of each lift
+    liftBusy = Array(liftsCount).fill(false); // Tracks if a lift is busy or not
+    liftRequests = Array.from({ length: liftsCount }, () => []); // Tracks the requests assigned to each lift
+    requestedFloors.clear();
 
     // Create floors
     for (let i = 1; i <= floorsCount; i++) {
@@ -40,7 +42,7 @@ function generateBuilding() {
             const upButton = document.createElement('button');
             upButton.className = 'up';
             upButton.innerText = 'Up';
-            upButton.onclick = () => requestLift(i, 'up');
+            upButton.onclick = () => requestLift(i);
             floorButtons.appendChild(upButton);
         }
 
@@ -48,7 +50,7 @@ function generateBuilding() {
             const downButton = document.createElement('button');
             downButton.className = 'down';
             downButton.innerText = 'Down';
-            downButton.onclick = () => requestLift(i, 'down');
+            downButton.onclick = () => requestLift(i);
             floorButtons.appendChild(downButton);
         }
 
@@ -77,32 +79,25 @@ function displayError(message) {
     controlPanel.appendChild(errorMessage);
 }
 
-function requestLift(floor, direction) {
-    if (requestedFloors[direction].has(floor)) {
-        return;
+function requestLift(floor) {
+    if (requestedFloors.has(floor)) {
+        return; // Ignore if the floor has already been requested
     }
 
-    requestedFloors[direction].add(floor);
-    pendingRequests[direction].push(floor);
-    processNextRequest(direction);
-}
+    requestedFloors.add(floor);
 
-function processNextRequest(direction) {
-    if (pendingRequests[direction].length === 0) return;
-
-    const floor = pendingRequests[direction].shift();
     const lifts = document.querySelectorAll('.lift');
-    const targetY = -(floor - 1) * 112;
     let closestLift = null;
     let minDistance = Infinity;
 
+    // Find the closest lift (busy or not)
     lifts.forEach(lift => {
         const liftIndex = parseInt(lift.dataset.lift);
         const currentFloor = liftState[liftIndex];
-        const isBusy = liftBusy[liftIndex];
         const distance = Math.abs(currentFloor - floor);
 
-        if (distance < minDistance && !isBusy) {
+        // Pick the closest lift regardless of its current state
+        if (distance < minDistance) {
             closestLift = lift;
             minDistance = distance;
         }
@@ -110,46 +105,57 @@ function processNextRequest(direction) {
 
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
-        liftBusy[liftIndex] = true;
-        moveLift(closestLift, liftIndex, floor, targetY, direction);
-    } else {
-        pendingRequests[direction].push(floor);
-        setTimeout(() => processNextRequest(direction), 1000);
+        // Assign this request to the closest lift, even if it's busy
+        liftRequests[liftIndex].push(floor);
+        if (!liftBusy[liftIndex]) {
+            moveLiftToNextFloor(liftIndex); // Start moving the lift if it's idle
+        }
     }
 }
 
-function moveLift(lift, liftIndex, targetFloor, targetY, direction) {
+function moveLiftToNextFloor(liftIndex) {
+    if (liftRequests[liftIndex].length === 0) {
+        liftBusy[liftIndex] = false;
+        return;
+    }
+
+    liftBusy[liftIndex] = true; // Mark the lift as busy
+    const nextFloor = liftRequests[liftIndex].shift();
+    const lifts = document.querySelectorAll('.lift');
+    const lift = lifts[liftIndex];
+    const targetY = -(nextFloor - 1) * 112;
+
     const currentFloor = liftState[liftIndex];
-    const floorsToMove = Math.abs(currentFloor - targetFloor);
-    const moveTime = floorsToMove * 2000;
+    const floorsToMove = Math.abs(currentFloor - nextFloor);
+    const moveTime = floorsToMove * 2000; // 2 seconds per floor
 
     setTimeout(() => {
         lift.style.transition = `transform ${moveTime}ms ease`;
         lift.style.transform = `translateY(${targetY}px)`;
-        liftState[liftIndex] = targetFloor;
+        liftState[liftIndex] = nextFloor;
 
         setTimeout(() => {
-            openDoors(lift, liftIndex, targetFloor, direction);
+            openDoors(lift, liftIndex, nextFloor);
         }, moveTime);
     }, 1000);
 }
 
-function openDoors(lift, liftIndex, targetFloor, direction) {
+function openDoors(lift, liftIndex, targetFloor) {
     if (!lift.classList.contains('door-open')) {
         lift.classList.add('door-open');
 
         setTimeout(() => {
-            closeDoors(lift, liftIndex, direction);
-            requestedFloors[direction].delete(targetFloor);
+            closeDoors(lift, liftIndex);
+            requestedFloors.delete(targetFloor); // Mark this floor as served
         }, 2500);
     }
 }
 
-function closeDoors(lift, liftIndex, direction) {
+function closeDoors(lift, liftIndex) {
     if (lift.classList.contains('door-open')) {
         lift.classList.remove('door-open');
     }
 
-    liftBusy[liftIndex] = false;
-    setTimeout(() => processNextRequest(direction), 500);
+    // Check if there are more requests to process
+    moveLiftToNextFloor(liftIndex);
 }
