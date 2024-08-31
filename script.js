@@ -24,13 +24,13 @@ function generateBuilding() {
     building.innerHTML = '';
 
     // Initialize state for lifts
-    liftState = Array(liftsCount).fill(1); // Tracks the current floor of each lift
-    liftBusy = Array(liftsCount).fill(false); // Tracks if a lift is busy or not
-    liftRequests = Array.from({ length: liftsCount }, () => []); // Tracks the requests assigned to each lift
+    liftState = Array(liftsCount).fill(1);
+    liftBusy = Array(liftsCount).fill(false);
+    liftRequests = Array.from({ length: liftsCount }, () => []);
     requestedFloors.clear();
 
     // Create floors
-    for (let i = 1; i <= floorsCount; i++) {
+    for (let i = 1; i <= floorsCount; i++) { // Start from bottom floor upwards
         const floor = document.createElement('div');
         floor.className = 'floor';
         floor.dataset.floor = i;
@@ -38,20 +38,31 @@ function generateBuilding() {
         const floorButtons = document.createElement('div');
         floorButtons.className = 'floor-buttons';
 
+        const floorLabel = document.createElement('div');
+        floorLabel.className = 'floor-label';
+
+        if (i === 1) {
+            floorLabel.innerText = 'Ground Floor';
+        } else {
+            floorLabel.innerText = `Floor ${i - 1}`;
+        }
+
+        floor.appendChild(floorLabel);
+
         if (i !== floorsCount) {
-            const upButton = document.createElement('button');
-            upButton.className = 'up';
-            upButton.innerText = 'Up';
-            upButton.onclick = () => requestLift(i);
-            floorButtons.appendChild(upButton);
+            const downButton = document.createElement('button');
+            downButton.className = 'up';
+            downButton.innerText = 'Up';
+            downButton.onclick = () => requestLift(i);
+            floorButtons.appendChild(downButton);
         }
 
         if (i !== 1) {
-            const downButton = document.createElement('button');
-            downButton.className = 'down';
-            downButton.innerText = 'Down';
-            downButton.onclick = () => requestLift(i);
-            floorButtons.appendChild(downButton);
+            const upButton = document.createElement('button');
+            upButton.className = 'down';
+            upButton.innerText = 'Down';
+            upButton.onclick = () => requestLift(i);
+            floorButtons.appendChild(upButton);
         }
 
         floor.appendChild(floorButtons);
@@ -65,9 +76,10 @@ function generateBuilding() {
         lift.dataset.lift = i;
         lift.style.transform = `translateY(0px)`;
         lift.style.left = `${(i * 70) + 100}px`;
-        building.firstChild.appendChild(lift);
+        building.firstChild.appendChild(lift); // Add lifts to the bottom floor
     }
 }
+
 
 function displayError(message) {
     const controlPanel = document.getElementById('control-panel');
@@ -81,7 +93,7 @@ function displayError(message) {
 
 function requestLift(floor) {
     if (requestedFloors.has(floor)) {
-        return; // Ignore if the floor has already been requested
+        return;
     }
 
     requestedFloors.add(floor);
@@ -90,13 +102,11 @@ function requestLift(floor) {
     let closestLift = null;
     let minDistance = Infinity;
 
-    // Find the closest lift (busy or not)
     lifts.forEach(lift => {
         const liftIndex = parseInt(lift.dataset.lift);
         const currentFloor = liftState[liftIndex];
         const distance = Math.abs(currentFloor - floor);
 
-        // Pick the closest lift regardless of its current state
         if (distance < minDistance) {
             closestLift = lift;
             minDistance = distance;
@@ -105,10 +115,9 @@ function requestLift(floor) {
 
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
-        // Assign this request to the closest lift, even if it's busy
         liftRequests[liftIndex].push(floor);
         if (!liftBusy[liftIndex]) {
-            moveLiftToNextFloor(liftIndex); // Start moving the lift if it's idle
+            moveLiftToNextFloor(liftIndex);
         }
     }
 }
@@ -119,7 +128,7 @@ function moveLiftToNextFloor(liftIndex) {
         return;
     }
 
-    liftBusy[liftIndex] = true; // Mark the lift as busy
+    liftBusy[liftIndex] = true;
     const nextFloor = liftRequests[liftIndex].shift();
     const lifts = document.querySelectorAll('.lift');
     const lift = lifts[liftIndex];
@@ -146,7 +155,7 @@ function openDoors(lift, liftIndex, targetFloor) {
 
         setTimeout(() => {
             closeDoors(lift, liftIndex);
-            requestedFloors.delete(targetFloor); // Mark this floor as served
+            requestedFloors.delete(targetFloor);
         }, 2500);
     }
 }
@@ -156,6 +165,5 @@ function closeDoors(lift, liftIndex) {
         lift.classList.remove('door-open');
     }
 
-    // Check if there are more requests to process
     moveLiftToNextFloor(liftIndex);
 }
