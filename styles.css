@@ -6,6 +6,7 @@ body {
     margin: 0;
     padding: 20px;
     background-color: #f0f0f0;
+
 }
 
 #control-panel {
@@ -22,7 +23,9 @@ body {
     /* Enable horizontal scrolling */
 }
 
-#generate {
+
+#generate,
+#back-btn {
     align-items: center;
     appearance: none;
     background-color: #fff;
@@ -120,7 +123,7 @@ button.down {
     justify-content: center;
     align-items: center;
     border-right: 2px solid white;
-    /* Separator between lifts */
+    z-index: -999;
 }
 
 .lift::before {
