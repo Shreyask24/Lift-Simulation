@@ -97,9 +97,20 @@ function displayError(message) {
 }
 
 function requestLift(floor, direction, button) {
-    // Disable the button and reduce opacity
-    button.disabled = true;
-    button.style.opacity = '0.5'; // Reduced opacity to indicate disabled state
+    // Get the up and down buttons for the current floor
+    const floorDiv = document.querySelector(`.floor[data-floor="${floor}"]`);
+    const upButton = floorDiv.querySelector('.up');
+    const downButton = floorDiv.querySelector('.down');
+
+    // Disable both buttons and reduce opacity
+    if (upButton) {
+        upButton.disabled = true;
+        upButton.style.opacity = '0.5'; // Reduced opacity to indicate disabled state
+    }
+    if (downButton) {
+        downButton.disabled = true;
+        downButton.style.opacity = '0.5';
+    }
 
     let requestSet = direction === 'up' ? requestedFloorsUp : requestedFloorsDown;
 
