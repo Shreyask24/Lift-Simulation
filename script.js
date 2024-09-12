@@ -109,11 +109,30 @@ function requestLift(floor, direction, button) {
         const currentFloor = liftState[liftIndex];
         const distance = Math.abs(currentFloor - floor);
 
-        if (distance < minDistance) {
-            closestLift = lift;
-            minDistance = distance;
+        // Only consider lifts that are not moving or moving in the right direction
+        if (!liftMoving[liftIndex] || (direction === 'up' && currentFloor < floor) || (direction === 'down' && currentFloor > floor)) {
+            if (distance < minDistance) {
+                closestLift = lift;
+                minDistance = distance;
+            }
         }
     });
+
+    // If no lift is moving in the right direction, fallback to any available lift
+    if (!closestLift) {
+        lifts.forEach(lift => {
+            const liftIndex = parseInt(lift.dataset.lift);
+            const currentFloor = liftState[liftIndex];
+            const distance = Math.abs(currentFloor - floor);
+
+            if (!liftMoving[liftIndex]) {
+                if (distance < minDistance) {
+                    closestLift = lift;
+                    minDistance = distance;
+                }
+            }
+        });
+    }
 
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
@@ -143,7 +162,7 @@ function moveLiftToNextFloor(liftIndex) {
     const moveTime = floorsToMove * 2000; // 2 seconds per floor
 
     setTimeout(() => {
-        lift.style.transition = `transform ${moveTime}ms ease`;
+        lift.style.transition = `transform ${moveTime}ms linear`; // Changed to 'linear' for consistent speed
         lift.style.transform = `translateY(${targetY}px)`;
         liftState[liftIndex] = floor;
 
@@ -151,7 +170,6 @@ function moveLiftToNextFloor(liftIndex) {
             liftMoving[liftIndex] = false;
             openDoors(lift, liftIndex, floor, button, direction);
         }, moveTime);
-
     }, 1000);
 }
 
