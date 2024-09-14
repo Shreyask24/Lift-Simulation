@@ -1,10 +1,10 @@
 let liftState = [];
 let liftRequests = [];
 let liftBusy = [];
-let requestedFloors = new Set();
+let requestedUpFloors = new Set();
+let requestedDownFloors = new Set();
 let liftMoving = [];
 let doorsOpening = [];
-let simultaneousRequest = false;
 
 document.getElementById('generate').addEventListener('click', generateBuilding);
 document.getElementById('back-btn').addEventListener('click', showForm);
@@ -32,7 +32,8 @@ function generateBuilding() {
     liftRequests = Array.from({ length: liftsCount }, () => []);
     liftMoving = Array(liftsCount).fill(false);
     doorsOpening = Array(liftsCount).fill(false);
-    requestedFloors.clear(); // Clear any old requests
+    requestedUpFloors.clear();
+    requestedDownFloors.clear();
 
     for (let i = 1; i <= floorsCount; i++) {
         const floor = document.createElement('div');
@@ -96,12 +97,18 @@ function displayError(message) {
 function requestLift(floor, direction, button) {
     disableButton(button);
 
-    // Check if the floor already has an active request for the given direction
-    if (requestedFloors.has(`${floor}-${direction}`)) {
+    if (direction === 'up' && requestedUpFloors.has(floor)) {
+        return;
+    }
+    if (direction === 'down' && requestedDownFloors.has(floor)) {
         return;
     }
 
-    requestedFloors.add(`${floor}-${direction}`);
+    if (direction === 'up') {
+        requestedUpFloors.add(floor);
+    } else {
+        requestedDownFloors.add(floor);
+    }
 
     const lifts = document.querySelectorAll('.lift');
     let closestLift = null;
@@ -112,8 +119,8 @@ function requestLift(floor, direction, button) {
         const currentFloor = liftState[liftIndex];
         const distance = Math.abs(currentFloor - floor);
 
-        // Ensure one lift is for up and another for down requests
-        if (!liftMoving[liftIndex] && !liftBusy[liftIndex]) {
+        // Only consider lifts that are not moving or moving in the right direction
+        if (!liftMoving[liftIndex] || (direction === 'up' && currentFloor < floor) || (direction === 'down' && currentFloor > floor)) {
             if (distance < minDistance) {
                 closestLift = lift;
                 minDistance = distance;
@@ -121,10 +128,26 @@ function requestLift(floor, direction, button) {
         }
     });
 
+    // If no lift is moving in the right direction, fallback to any available lift
+    if (!closestLift) {
+        lifts.forEach(lift => {
+            const liftIndex = parseInt(lift.dataset.lift);
+            const currentFloor = liftState[liftIndex];
+            const distance = Math.abs(currentFloor - floor);
+
+            if (!liftMoving[liftIndex]) {
+                if (distance < minDistance) {
+                    closestLift = lift;
+                    minDistance = distance;
+                }
+            }
+        });
+    }
+
     if (closestLift) {
         const liftIndex = parseInt(closestLift.dataset.lift);
         liftRequests[liftIndex].push({ floor, direction, button });
-        if (!liftBusy[liftIndex]) {
+        if (!liftBusy[liftIndex] && !liftMoving[liftIndex]) {
             moveLiftToNextFloor(liftIndex);
         }
     }
@@ -138,7 +161,8 @@ function moveLiftToNextFloor(liftIndex) {
     }
 
     liftBusy[liftIndex] = true;
-    const { floor, button } = liftRequests[liftIndex].shift();
+    liftMoving[liftIndex] = true;
+    const { floor, direction, button } = liftRequests[liftIndex].shift();
     const lifts = document.querySelectorAll('.lift');
     const lift = lifts[liftIndex];
     const targetY = -(floor - 1) * 112;
@@ -154,34 +178,47 @@ function moveLiftToNextFloor(liftIndex) {
 
         setTimeout(() => {
             liftMoving[liftIndex] = false;
-            openDoors(lift, liftIndex, floor, button);
+            openDoors(lift, liftIndex, floor, button, direction);
         }, moveTime);
-    }, 2000);
+    }, 1000);
 }
 
-function openDoors(lift, liftIndex, targetFloor, button) {
+function openDoors(lift, liftIndex, targetFloor, button, direction) {
     if (!doorsOpening[liftIndex]) {
         doorsOpening[liftIndex] = true;
         if (!lift.classList.contains('door-open')) {
             lift.classList.add('door-open');
 
             setTimeout(() => {
-                closeDoors(lift, liftIndex, targetFloor, button);
-            }, 2500); // 2.5 seconds
+                closeDoors(lift, liftIndex, targetFloor, button, direction);
+                if (direction === 'up') {
+                    requestedUpFloors.delete(targetFloor);
+                } else {
+                    requestedDownFloors.delete(targetFloor);
+                }
+            }, 2500);
+        } else {
+            setTimeout(() => {
+                closeDoors(lift, liftIndex, targetFloor, button, direction);
+                if (direction === 'up') {
+                    requestedUpFloors.delete(targetFloor);
+                } else {
+                    requestedDownFloors.delete(targetFloor);
+                }
+            }, 2500);
         }
     }
 }
 
-function closeDoors(lift, liftIndex, targetFloor, button) {
+function closeDoors(lift, liftIndex, targetFloor, button, direction) {
     if (lift.classList.contains('door-open')) {
         lift.classList.remove('door-open');
     }
 
     doorsOpening[liftIndex] = false;
 
-    if (button) enableButton(button);  // Reactivate the button when lift is done serving
+    reactivateButtonsAtFloor(targetFloor);
 
-    requestedFloors.delete(`${targetFloor}-${button ? button.className : ''}`);
     moveLiftToNextFloor(liftIndex);
 }
 
@@ -195,6 +232,11 @@ function enableButton(button) {
     button.style.opacity = '1';
 }
 
+function reactivateButtonsAtFloor(floor) {
+    const buttons = document.querySelectorAll(`.floor[data-floor="${floor}"] .floor-buttons button`);
+    buttons.forEach(button => enableButton(button));
+}
+
 function hideForm() {
     document.getElementById('control-panel').style.display = 'none';
     document.getElementById('back-btn').style.display = 'block';
@@ -204,4 +246,6 @@ function showForm() {
     document.getElementById('control-panel').style.display = 'block';
     document.getElementById('back-btn').style.display = 'none';
     document.getElementById('building').innerHTML = '';
+    document.getElementById('floors').value = '';
+    document.getElementById('lifts').value = '';
 }
