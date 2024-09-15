@@ -155,7 +155,7 @@ function moveLiftToNextFloor(liftIndex) {
         setTimeout(() => {
             openDoors(lift, liftIndex, floor, button, direction);
         }, moveTime);
-    }, 1000);
+    });
 }
 
 function openDoors(lift, liftIndex, targetFloor, button, direction) {
