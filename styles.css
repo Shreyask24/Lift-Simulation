@@ -59,16 +59,27 @@ body {
     z-index: 0;
 }
 
+/* Floor layout */
 .floor {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: center;
+    align-items: flex-start;
+    flex-direction: column;
     width: 100%;
     border-top: 2px solid #000;
     position: relative;
-    height: 100px;
+    height: 150px;
     margin-bottom: 10px;
-    position: relative;
+}
+
+.floor-label {
+    width: 20vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-weight: 700;
+    position: sticky;
 }
 
 #floors,
@@ -87,6 +98,9 @@ body {
 .floor-buttons {
     display: flex;
     flex-direction: column;
+    /* Stack buttons vertically */
+    margin-top: 5px;
+    /* Add space between label and buttons */
 }
 
 button {
