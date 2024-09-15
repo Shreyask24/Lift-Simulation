@@ -148,7 +148,8 @@ button.down {
     background-color: #353535;
     z-index: 1;
     left: 0;
-    transition: width 1s;
+    transition: width 2.5s;
+    /* Change to 2.5 seconds */
 }
 
 .lift::after {
@@ -159,7 +160,8 @@ button.down {
     background-color: #353535;
     z-index: 1;
     right: 0;
-    transition: width 1s;
+    transition: width 2.5s;
+    /* Change to 2.5 seconds */
 }
 
 .lift.door-open::before {

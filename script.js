@@ -155,7 +155,7 @@ function moveLiftToNextFloor(liftIndex) {
         setTimeout(() => {
             openDoors(lift, liftIndex, floor, button, direction);
         }, moveTime);
-    }, 2000);
+    }, 1000);
 }
 
 function openDoors(lift, liftIndex, targetFloor, button, direction) {
@@ -169,7 +169,7 @@ function openDoors(lift, liftIndex, targetFloor, button, direction) {
             } else {
                 requestedFloorsDown.delete(targetFloor);
             }
-        }, 3000);
+        }, 2500); // Doors stay open for 2.5 seconds before closing
     }
 }
 
@@ -193,7 +193,10 @@ function closeDoors(lift, liftIndex, targetFloor, button, direction) {
         downButton.style.opacity = '1';
     }
 
-    moveLiftToNextFloor(liftIndex);
+    // Wait for 2.5 seconds for doors to close before moving the lift
+    setTimeout(() => {
+        moveLiftToNextFloor(liftIndex);
+    }, 2500); // Doors take 2.5 seconds to close
 }
 
 // Hide form and show back button
