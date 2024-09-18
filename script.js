@@ -1,4 +1,5 @@
 document.getElementById('generate').addEventListener('click', generateBuilding);
+document.getElementById('back-btn').addEventListener('click', showForm); // Add this event listener for the back button
 
 let liftState = [];
 let pendingRequests = { up: [], down: [] };
